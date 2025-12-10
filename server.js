@@ -8,28 +8,31 @@ import { notFound, errorHandler } from "./middleware/errorHandler.js";
 dotenv.config();
 const app = express();
 
-import cors from "cors";
-
+// -------------------- CORS FIX --------------------
 app.use(cors({
   origin: [
-    "http://localhost:5173",                    // local dev // after hosting
-    "https://app-0ce6d237-de03-4e27-ae97-edffedc866a3.cleverapps.io" // backend itself
+    "http://localhost:5173",                                    // local dev
+    "https://app-0ce6d237-de03-4e27-ae97-edffedc866a3.cleverapps.io", // backend deployed
+    "https://<YOUR_NETLIFY_URL>.netlify.app"                    // <-- replace later when frontend deployed
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  credentials: true,
   allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
   preflightContinue: false,
   optionsSuccessStatus: 200
 }));
 
 app.options("*", cors());
+// ---------------------------------------------------
+
 app.use(express.json());
 
-// Simple health check
+// Health check route
 app.get("/", (req, res) => {
   res.json({ message: "Hostel PG API running" });
 });
 
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingRoutes);
 
@@ -37,5 +40,10 @@ app.use("/api/bookings", bookingRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
+// -------------------- SERVER LISTEN FIX --------------------
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`Server running on port http://localhost:${PORT}`));
+
+// Must bind 0.0.0.0 to work on Clever Cloud production
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
+});
