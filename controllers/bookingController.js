@@ -4,10 +4,15 @@ import { db } from "../config/db.js";
 export const createBooking = async (req, res) => {
   try {
     const { room_type, stay_duration_months, start_date, notes } = req.body;
+
     if (!room_type || !stay_duration_months || !start_date) {
-      return res
-        .status(400)
-        .json({ message: "room_type, stay_duration_months, start_date required" });
+      return res.status(400).json({ message: "room_type, stay_duration_months, start_date required" });
+    }
+
+    // Validate ENUM
+    const validTypes = ["single","double","triple","dorm"];
+    if (!validTypes.includes(room_type)) {
+      return res.status(400).json({ message: "Invalid room_type" });
     }
 
     const [result] = await db.query(
@@ -16,12 +21,14 @@ export const createBooking = async (req, res) => {
     );
 
     const [rows] = await db.query("SELECT * FROM bookings WHERE id = ?", [result.insertId]);
-    res.status(201).json(rows[0]);
+    return res.status(201).json(rows[0]);
+
   } catch (err) {
     console.error("Create booking error:", err);
-    res.status(500).json({ message: "Server error while creating booking" });
+    return res.status(500).json({ message: "Server booking error", error: err.message });
   }
 };
+
 
 // Get all bookings for current user with search & filter
 export const getBookings = async (req, res) => {
