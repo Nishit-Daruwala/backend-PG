@@ -8,12 +8,21 @@ import { notFound, errorHandler } from "./middleware/errorHandler.js";
 dotenv.config();
 const app = express();
 
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    credentials: true
-  })
-);
+import cors from "cors";
+
+app.use(cors({
+  origin: [
+    "http://localhost:5173",                    // local dev // after hosting
+    "https://app-0ce6d237-de03-4e27-ae97-edffedc866a3.cleverapps.io" // backend itself
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"],
+  preflightContinue: false,
+  optionsSuccessStatus: 200
+}));
+
+app.options("*", cors());
 app.use(express.json());
 
 // Simple health check
