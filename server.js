@@ -8,26 +8,24 @@ import { notFound, errorHandler } from "./middleware/errorHandler.js";
 dotenv.config();
 const app = express();
 
-// -------------------- CORS FIX --------------------
+// -------------- CORS --------------
 app.use(cors({
   origin: [
-    "http://localhost:5173",                                    // local dev
-    "https://app-0ce6d237-de03-4e27-ae97-edffedc866a3.cleverapps.io", // backend deployed
-    "https://<YOUR_NETLIFY_URL>.netlify.app"                    // <-- replace later when frontend deployed
+    "http://localhost:5173",
+    "https://app-0ce6d237-de03-4e27-ae97-edffedc866a3.cleverapps.io",
+    "https://<YOUR_NETLIFY_SITE>.netlify.app"   // <-- Replace after deploy
   ],
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 200
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 app.options("*", cors());
-// ---------------------------------------------------
+// ---------------------------------
 
 app.use(express.json());
 
-// Health check route
+// Health Test
 app.get("/", (req, res) => {
   res.json({ message: "Hostel PG API running" });
 });
@@ -36,14 +34,11 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingRoutes);
 
-// Error handlers
+// Middlewares
 app.use(notFound);
 app.use(errorHandler);
 
-// -------------------- SERVER LISTEN FIX --------------------
 const PORT = process.env.PORT || 8080;
-
-// Must bind 0.0.0.0 to work on Clever Cloud production
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server Running on PORT: https://localhost:${PORT}`);
 });

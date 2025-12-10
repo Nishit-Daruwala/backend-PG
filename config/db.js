@@ -7,9 +7,9 @@ export const db = mysql.createPool({
   user: process.env.MYSQL_ADDON_USER || process.env.DB_USER,
   password: process.env.MYSQL_ADDON_PASSWORD || process.env.DB_PASSWORD,
   database: process.env.MYSQL_ADDON_DB || process.env.DB_NAME,
-  port: process.env.MYSQL_ADDON_PORT || 3306,
+  port: process.env.MYSQL_ADDON_PORT || process.env.DB_PORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false }, // Important for Clever/Railway
 });

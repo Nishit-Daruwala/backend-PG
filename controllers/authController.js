@@ -2,11 +2,13 @@ import bcrypt from "bcryptjs";
 import { db } from "../config/db.js";
 import { generateToken } from "../utils/generateToken.js";
 
+// ================= REGISTER =================
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
+
     if (!name || !email || !password) {
-      return res.status(400).json({ message: "Name, email, password required" });
+      return res.status(400).json({ message: "All fields are required" });
     }
 
     const [existing] = await db.query("SELECT id FROM users WHERE email = ?", [email]);
@@ -15,53 +17,56 @@ export const registerUser = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const [result] = await db.query(
-      "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)",
-      [name, email, hashedPassword, role || "student"]
-    );
+
+    // insert WITHOUT breaking if role column doesn't exist
+    const insertQuery = role
+      ? "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)"
+      : "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
+
+    const params = role
+      ? [name, email, hashedPassword, role]
+      : [name, email, hashedPassword];
+
+    const [result] = await db.query(insertQuery, params);
 
     const user = { id: result.insertId, name, email, role: role || "student" };
     const token = generateToken(user);
 
-    return res.status(201).json({ user, token });
+    return res.status(201).json({ success: true, user, token });
+
   } catch (err) {
-    console.error("Register error:", err);
-    res.status(500).json({ message: "Server error while registering" });
+    console.error("REGISTER ERROR:", err);
+    return res.status(500).json({ message: "Registration failed", error: err.message });
   }
 };
 
+// ================= LOGIN =================
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     if (!email || !password) {
-      return res.status(400).json({ message: "Email and password required" });
+      return res.status(400).json({ message: "Email & Password required" });
     }
 
-    const [rows] = await db.query(
-      "SELECT id, name, email, password, role FROM users WHERE email = ?",
-      [email]
-    );
+    const [rows] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
     if (rows.length === 0) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const userRow = rows[0];
-    const isMatch = await bcrypt.compare(password, userRow.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid email or password" });
+    const user = rows[0];
+    const match = await bcrypt.compare(password, user.password);
+
+    if (!match) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const user = {
-      id: userRow.id,
-      name: userRow.name,
-      email: userRow.email,
-      role: userRow.role
-    };
-    const token = generateToken(user);
+    const token = generateToken({ id: user.id, email: user.email, role: user.role });
 
-    return res.json({ user, token });
+    return res.json({ success: true, user, token });
+
   } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ message: "Server error while logging in" });
+    console.error("LOGIN ERROR:", err);
+    return res.status(500).json({ message: "Login failed", error: err.message });
   }
 };
