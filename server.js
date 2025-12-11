@@ -12,7 +12,7 @@ const app = express();
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://app-0ce6d237-de03-4e27-ae97-edffedc866a3.cleverapps.io",
+    "https://app-284339f1-cc11-4010-a20c-b339bf9ee5a9.cleverapps.io/",
     "https://<YOUR_NETLIFY_SITE>.netlify.app"   // <-- Replace after deploy
   ],
   credentials: true,
